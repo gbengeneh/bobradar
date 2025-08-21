@@ -43,7 +43,7 @@ export default function Login() {
                               src="/img/logo-alt.jpeg"
                           />
                       </div>
-                      <div className="tracking-tight text-lg sm:text-xl font-bold text-white">Welcome to Degen Screener</div>
+                      <div className="tracking-tight text-lg sm:text-xl font-bold text-white">Welcome to Degen Scanner</div>
                       <div className="text-white/70 text-sm sm:text-base px-2">Sign in to access detailed Solana token analytics</div>
                       </div>
                       <div className="p-6 pt-0 space-y-4 sm:space-y-6 px-4 sm:px-6 pb-4 sm:pb-6">
