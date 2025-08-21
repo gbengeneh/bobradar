@@ -32,7 +32,7 @@ export default function Page() {
     const [tokennomics, setTokennomics] = useState<Tokennomics[] | null>(null);
     const [tokenData, setTokenData] = useState<TokenDetails | null>(null);
     const [holders, setHolders] = useState<Holder[]>([]);
-    const [error, setError] = useState("");
+    const [error, setError] = useState<boolean>(false);
 
     const handleSubmit = () => {
         router.push(`/scanner?token=${tokenAddress}`);
@@ -40,7 +40,7 @@ export default function Page() {
     }
 
     const fetchTokenData = async () => {
-        if (!tokenAddress) return;  
+        if (!tokenAddress && !token) return;
 
         const data = {
             "jsonrpc": "2.0",
@@ -74,15 +74,11 @@ export default function Page() {
                 holdersRequestBody
             )
 
-            console.log("Tokennomics Data:", tokennomics.data);
-            console.log("Token Data:", response.data);
-            console.log("Holders Data:", holders.data);
-
             setTokennomics(tokennomics.data.pairs);
             setTokenData(response?.data?.result);
             setHolders(holders?.data?.result?.value || []);
         } catch (error) {
-            setError("Failed to fetch token data. Please check the address and try again.");
+            setError(true);
         } finally {
             setLoading(false);
         }
@@ -313,6 +309,23 @@ export default function Page() {
                                                                 X
                                                             </button>
                                                         </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {error && (
+                                                <div className="mb-6 md:mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                                                    <div className="flex items-start gap-3">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-circle-alert w-5 h-5 flex-shrink-0 mt-0.5">
+                                                            <circle cx="12" cy="12" r="10"></circle>
+                                                            <line x1="12" x2="12" y1="8" y2="12"></line>
+                                                            <line x1="12" x2="12.01" y1="16" y2="16"></line>
+                                                        </svg>
+                                                        <div>
+                                                            <div className="font-semibold mb-1">Invalid Token Address</div>
+                                                            <div>No market data available for this token</div>
+                                                            <div className="mt-2 text-red-300 text-xs">Example valid address: 4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -613,6 +626,7 @@ export default function Page() {
                                         </section>
                                     </>
                                 )}
+
                             </main>
                         </div>
                         <div className="fixed bottom-0 left-0 right-0 z-40 md:relative md:z-auto">
