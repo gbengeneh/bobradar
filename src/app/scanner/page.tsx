@@ -36,13 +36,11 @@ export default function Page() {
 
     const handleSubmit = () => {
         router.push(`/scanner?token=${tokenAddress}`);
+        fetchTokenData(); // Fetch data when the user submits the form
     }
 
     const fetchTokenData = async () => {
-        console.log("========FETCHING TOKEN=========");
-        console.log("token: ", token);
-        console.log("token address: ", tokenAddress)
-        if (!tokenAddress || token) return;  
+        if (!tokenAddress) return;  
 
         const data = {
             "jsonrpc": "2.0",
@@ -101,6 +99,21 @@ export default function Page() {
     const shortenAddress = (address: string) => {
         return address.slice(0, 4) + '...' + address.slice(-4);
     };
+
+    function formatNumber(number: number): string {
+        if (typeof number !== 'number' || isNaN(number)) return '0';
+
+        const absNumber: number = Math.abs(number);
+        const sign: string = number < 0 ? '-' : '';
+
+        if (absNumber >= 1_000_000) {
+            return `${sign}${(number / 1_000_000).toFixed(2)}M`;
+        } else if (absNumber >= 1_000) {
+            return `${sign}${(number / 1_000).toFixed(2)}k`;
+        } else {
+            return `${sign}${number.toFixed(2)}`;
+        }
+    }
     
 
     useEffect(()=> {
@@ -159,7 +172,7 @@ export default function Page() {
                                                 </div>
                                             </div>
 
-                                            {tokenData && holders && (
+                                            {tokenData && holders && tokennomics && (
                                                 <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                                                     <div className="rounded-lg border text-card-foreground bg-white/5 backdrop-blur-xl border-white/10 shadow-2xl">
                                                         <div className="p-4 sm:p-6 md:p-8">
@@ -188,14 +201,31 @@ export default function Page() {
                                                                 {tokenData?.id}
                                                             </p>
                                                             <div className="flex items-center gap-2 md:gap-4 flex-wrap">
-                                                                <span className="text-xl sm:text-2xl md:text-3xl font-bold text-white">$0.000209</span>
-                                                                <div className="flex items-center gap-1 text-green-400">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-up w-3 h-3 md:w-4 md:h-4">
-                                                                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-                                                                    <polyline points="16 7 22 7 22 13"></polyline>
-                                                                </svg>
-                                                                <span className="font-semibold text-sm md:text-base">229.00%</span>
-                                                                </div>
+                                                                <span className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
+                                                                    ${tokennomics[0].priceUsd}
+                                                                </span>
+                                                                {tokennomics[0].priceChange.h24 > 0 ? (
+                                                                    <div className="flex items-center gap-1 text-green-400">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-up w-3 h-3 md:w-4 md:h-4">
+                                                                            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                                                                            <polyline points="16 7 22 7 22 13"></polyline>
+                                                                        </svg>
+                                                                        <span className="font-semibold text-sm md:text-base">
+                                                                            {tokennomics[0].priceChange.h24}%
+                                                                        </span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="flex items-center gap-1 text-red-400">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-trending-down w-3 h-3 md:w-4 md:h-4">
+                                                                            <polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline>
+                                                                            <polyline points="16 17 22 17 22 11"></polyline>
+                                                                        </svg>
+                                                                        <span className="font-semibold text-sm md:text-base">
+                                                                            {tokennomics[0].priceChange.h24}%
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+
                                                             </div>
                                                             </div>
                                                         </div>
@@ -208,7 +238,9 @@ export default function Page() {
                                                                 </svg>
                                                                 <span className="text-white/70 text-xs sm:text-sm">Market Cap</span>
                                                             </div>
-                                                            <span className="text-sm sm:text-lg font-bold text-white">$208.71K</span>
+                                                            <span className="text-sm sm:text-lg font-bold text-white">
+                                                                ${formatNumber(tokennomics[0].marketCap)}
+                                                            </span>
                                                             </div>
                                                             <div className="bg-white/5 rounded-lg p-3 sm:p-4">
                                                             <div className="flex items-center gap-2 mb-2">
@@ -218,7 +250,9 @@ export default function Page() {
                                                                 </svg>
                                                                 <span className="text-white/70 text-xs sm:text-sm">24h Volume</span>
                                                             </div>
-                                                            <span className="text-sm sm:text-lg font-bold text-white">$2.77M</span>
+                                                            <span className="text-sm sm:text-lg font-bold text-white">
+                                                                ${formatNumber(tokennomics[0].volume.h24)}
+                                                            </span>
                                                             </div>
                                                             <div className="bg-white/5 rounded-lg p-3 sm:p-4">
                                                             <div className="flex items-center gap-2 mb-2">
@@ -228,7 +262,9 @@ export default function Page() {
                                                                 </svg>
                                                                 <span className="text-white/70 text-xs sm:text-sm">Liquidity</span>
                                                             </div>
-                                                            <span className="text-sm sm:text-lg font-bold text-white">$58.72K</span>
+                                                            <span className="text-sm sm:text-lg font-bold text-white">
+                                                                ${formatNumber(tokennomics[0].liquidity.usd)}
+                                                            </span>
                                                             </div>
                                                             <div className="bg-white/5 rounded-lg p-3 sm:p-4">
                                                             <div className="flex items-center gap-2 mb-2">
@@ -240,30 +276,41 @@ export default function Page() {
                                                                 </svg>
                                                                 <span className="text-white/70 text-xs sm:text-sm">24h Txns</span>
                                                             </div>
-                                                            <span className="text-sm sm:text-lg font-bold text-white">47,424</span>
+                                                            <span className="text-sm sm:text-lg font-bold text-white">
+                                                                {tokennomics[0].txns.h24.buys + tokennomics[0].txns.h24.sells} Txns
+                                                            </span>
                                                             </div>
                                                         </div>
                                                         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                                                            <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border h-9 rounded-md px-3 border-white/20 text-white hover:bg-white hover:text-black bg-transparent text-xs sm:text-sm">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-external-link w-3 h-3 sm:w-4 sm:h-4 mr-2">
-                                                                <path d="M15 3h6v6"></path>
-                                                                <path d="M10 14 21 3"></path>
-                                                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                                            </svg>
-                                                            View on Solscan
+                                                            <button 
+                                                                className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border h-9 rounded-md px-3 border-white/20 text-white hover:bg-white hover:text-black bg-transparent text-xs sm:text-sm"
+                                                                onClick={()=> window.open(`https://solscan.io/token/${tokenData.id}`, '_blank')}
+                                                            >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-external-link w-3 h-3 sm:w-4 sm:h-4 mr-2">
+                                                                    <path d="M15 3h6v6"></path>
+                                                                    <path d="M10 14 21 3"></path>
+                                                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                                                </svg>
+                                                                View on Solscan
                                                             </button>
-                                                            <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border h-9 rounded-md px-3 border-white/20 text-white hover:bg-white hover:text-black bg-transparent text-xs sm:text-sm">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-up w-3 h-3 sm:w-4 sm:h-4 mr-2">
-                                                                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-                                                                <polyline points="16 7 22 7 22 13"></polyline>
-                                                            </svg>
-                                                            Chart
+                                                            <button 
+                                                                className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border h-9 rounded-md px-3 border-white/20 text-white hover:bg-white hover:text-black bg-transparent text-xs sm:text-sm"
+                                                                onClick={() => window.open(`https://dexscreener.com/solana/${tokenData.id}`, '_blank')}
+                                                            >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-up w-3 h-3 sm:w-4 sm:h-4 mr-2">
+                                                                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                                                                    <polyline points="16 7 22 7 22 13"></polyline>
+                                                                </svg>
+                                                                Chart
                                                             </button>
-                                                            <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border h-9 rounded-md px-3 border-white/20 text-white hover:bg-white hover:text-black bg-transparent text-xs sm:text-sm">
-                                                            <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                                                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
-                                                            </svg>
-                                                            X
+                                                            <button 
+                                                                className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border h-9 rounded-md px-3 border-white/20 text-white hover:bg-white hover:text-black bg-transparent text-xs sm:text-sm"
+                                                                onClick={() => window.open(`https://x.com/search?q=${tokenData.id}`, '_blank')}
+                                                            >
+                                                                <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                                                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                                                                </svg>
+                                                                X
                                                             </button>
                                                         </div>
                                                         </div>

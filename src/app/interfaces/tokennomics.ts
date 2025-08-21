@@ -45,10 +45,10 @@ interface Volume {
 }
 
 interface PriceChange {
-  m5?: number; // Optional property
-  h1?: number; // Optional property
-  h6?: number; // Optional property
-  h24?: number; // Optional property
+  m5: number; // Optional property
+  h1: number; // Optional property
+  h6: number; // Optional property
+  h24: number; // Optional property
 }
 
 interface Liquidity {
