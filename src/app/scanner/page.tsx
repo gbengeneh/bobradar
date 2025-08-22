@@ -120,6 +120,32 @@ export default function Page() {
     }, [token])
 
 
+
+    console.log("HOLDERS: " , holders);
+    console.log("TOKEN DATA: ", tokenData);
+
+    function getHolderStats(data: Holder[]): { largestholder: number, top10holder: number } {
+        // 1. Calculate total supply
+        const total = data.reduce((sum, h) => sum + h.uiAmount, 0);
+
+        // 2. Sort holders by amount descending
+        const sorted = [...data].sort((a, b) => b.uiAmount - a.uiAmount);
+
+        // 3. Largest holder percentage
+        const largestPercentage = (sorted[0].uiAmount / total) * 100;
+
+        // 4. Sum of top 10 holders
+        const top10 = sorted.slice(0, 10);
+        const top10Percentage = (top10.reduce((sum, h) => sum + h.uiAmount, 0) / total) * 100;
+
+        // 5. Return both percentages rounded to 2 decimal places
+        return {
+            largestholder: parseFloat(largestPercentage.toFixed(2)),
+            top10holder: parseFloat(top10Percentage.toFixed(2))
+        };
+    }
+
+
     return (
         <>
             { loading ? (
@@ -606,11 +632,11 @@ export default function Page() {
                                                         <div className="text-white/70 text-xs sm:text-sm">Top Holders</div>
                                                     </div>
                                                     <div>
-                                                        <div className="text-lg sm:text-xl font-bold text-white">34.8%</div>
+                                                        <div className="text-lg sm:text-xl font-bold text-white">{getHolderStats(holders).top10holder}%</div>
                                                         <div className="text-white/70 text-xs sm:text-sm">Top 10 Share</div>
                                                     </div>
                                                     <div className="col-span-2 sm:col-span-1">
-                                                        <div className="text-lg sm:text-xl font-bold text-white">14.2%</div>
+                                                        <div className="text-lg sm:text-xl font-bold text-white">{getHolderStats(holders).largestholder}%</div>
                                                         <div className="text-white/70 text-xs sm:text-sm">Largest Holder</div>
                                                     </div>
                                                     </div>

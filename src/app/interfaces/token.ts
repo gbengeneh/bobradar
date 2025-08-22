@@ -74,7 +74,7 @@ export interface TokenDetails {
   content: Content;
   authorities: Authority[];
   compression: Compression;
-  grouping: any[];
+  grouping: string[];
   royalty: Royalty;
   creators: Creator[];
   ownership: Ownership;

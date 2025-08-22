@@ -144,7 +144,7 @@ type Option = {
 function DropdownComponent() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState('Where did you hear about us?');
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const options = [
     { value: 'twitter', label: 'Twitter / X' },
