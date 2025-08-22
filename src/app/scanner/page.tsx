@@ -22,7 +22,9 @@ type Holder = {
 export default function Page() {
     const router = useRouter();
 
-    const searchparams = new URLSearchParams(window.location.search);
+    const searchparams = new URLSearchParams(
+        typeof window !== "undefined" ? window.location.search : ""
+    );
     const token = searchparams.get("token");
 
 
@@ -42,45 +44,49 @@ export default function Page() {
     const fetchTokenData = async () => {
         if (!tokenAddress && !token) return;
 
-        const data = {
-            "jsonrpc": "2.0",
-            "id": "helius-metadata",
-            "method": "getAsset",
-            "params": {
-                "id": tokenAddress,
+        if(token) {
+
+            const data = {
+                "jsonrpc": "2.0",
+                "id": "helius-metadata",
+                "method": "getAsset",
+                "params": {
+                    "id": tokenAddress ? tokenAddress : token,
+                }
+            }
+           const holdersRequestBody = {
+                "jsonrpc": "2.0",
+                "id": "holders",
+                "method": "getTokenLargestAccounts",
+                "params": [
+                    tokenAddress ? tokenAddress : token,
+                ]
+            }
+    
+            try {
+    
+                setLoading(true);
+                const tokennomics = await axios.get(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);   
+                setTokennomics(tokennomics.data.pairs);
+    
+                const response = await axios.post(
+                    `https://mainnet.helius-rpc.com/?api-key=00b4067b-0ffe-428c-ae8a-4cd890291b34`, 
+                    data
+                );
+                setTokenData(response?.data?.result);
+    
+                const holders = await axios.post(
+                    `https://mainnet.helius-rpc.com/?api-key=00b4067b-0ffe-428c-ae8a-4cd890291b34`, 
+                    holdersRequestBody
+                )
+                setHolders(holders?.data?.result?.value || []);
+            } catch (error) {
+                setError(true);
+            } finally {
+                setLoading(false);
             }
         }
-       const holdersRequestBody = {
-            "jsonrpc": "2.0",
-            "id": "holders",
-            "method": "getTokenLargestAccounts",
-            "params": [
-                tokenAddress,
-            ]
-        }
 
-        try {
-
-            setLoading(true);
-            const tokennomics = await axios.get(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);   
-            setTokennomics(tokennomics.data.pairs);
-
-            const response = await axios.post(
-                `https://mainnet.helius-rpc.com/?api-key=00b4067b-0ffe-428c-ae8a-4cd890291b34`, 
-                data
-            );
-            setTokenData(response?.data?.result);
-
-            const holders = await axios.post(
-                `https://mainnet.helius-rpc.com/?api-key=00b4067b-0ffe-428c-ae8a-4cd890291b34`, 
-                holdersRequestBody
-            )
-            setHolders(holders?.data?.result?.value || []);
-        } catch (error) {
-            setError(true);
-        } finally {
-            setLoading(false);
-        }
     }
 
     const formatAmount = (uiAmount: number) => {
@@ -119,10 +125,6 @@ export default function Page() {
         }
     }, [token])
 
-
-
-    console.log("HOLDERS: " , holders);
-    console.log("TOKEN DATA: ", tokenData);
 
     function getHolderStats(data: Holder[]): { largestholder: number, top10holder: number } {
         // 1. Calculate total supply
