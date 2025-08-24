@@ -21,7 +21,7 @@ const Loading: React.FC = () => {
                         <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400/40 to-purple-400/40 blur-xl animate-pulse"></div>
                         <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-white/40 bg-black/50 backdrop-blur-sm">
                             <img 
-                            alt="Degen Scanner" 
+                            alt="Dex Scanner" 
                             width="160" 
                             height="160" 
                             decoding="async" 

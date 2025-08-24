@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Degen Scanner - Solan Token Tracker | Advanced Crypto Analytics",
+  title: "DexTrendings - Gentleman's DeFi Intelligence",
   description: "",
 };
 

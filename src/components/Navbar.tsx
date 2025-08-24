@@ -11,7 +11,7 @@ const Navbar = () => {
                         <div className="relative transition-all duration-500 ">
                             <div className="relative  w-full h-full overflow-hidden">
                                 <img
-                                    alt="Degen Scanner"
+                                    alt="Dex Scanner"
                                     height={96}
                                     className="w-full h-[64px] object-contain filter brightness-110 contrast-110"
                                     style={{ color: 'transparent' }}

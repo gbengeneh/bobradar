@@ -64,7 +64,6 @@ export default function Page() {
             }
     
             try {
-    
                 setLoading(true);
                 const tokennomics = await axios.get(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);   
                 setTokennomics(tokennomics.data.pairs);
@@ -119,7 +118,6 @@ export default function Page() {
 
     useEffect(()=> {
         if(token) {
-            console.log("Token from URL:", token);
             setTokenAddress(token?.toString());
             fetchTokenData();  // Trigger fetch with the token address from URL
         }
@@ -656,7 +654,7 @@ export default function Page() {
                             <footer className="border-t border-white/10 py-4 sm:py-6 md:py-8 bg-black/95 backdrop-blur-xl">
                                 <div className="container mx-auto px-4 sm:px-6">
                                 <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4">
-                                    <p className="text-white/70 text-xs sm:text-sm font-medium text-center sm:text-left">© 2025 Degen Screener. Built on Solana.</p>
+                                    <p className="text-white/70 text-xs sm:text-sm font-medium text-center sm:text-left">© 2025 Dex Screener. Built on Solana.</p>
                                     <a target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-white transition-colors text-xs sm:text-sm font-medium" href="https://x.com/bobradarapp">Follow us on X</a>
                                 </div>
                                 </div>
